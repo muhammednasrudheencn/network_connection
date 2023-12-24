@@ -1,27 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:sample/const/color.dart';
 import 'package:sample/screens/home.dart';
-import 'package:sample/screens/register.dart';
 import 'package:sample/service/auth_service.dart';
+import 'package:sample/service/data_service.dart';
 
-class SigninScreen extends StatefulWidget {
-  const SigninScreen({super.key});
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
 
   @override
-  State<SigninScreen> createState() => _SigninScreenState();
+  State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
 final formkey = GlobalKey<FormState>();
 final emailcontroller = TextEditingController();
 final passwordcontroller = TextEditingController();
+final confirmpassword = TextEditingController();
 String email = '@gmail.com';
 
-class _SigninScreenState extends State<SigninScreen> {
+class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     final customsize = MediaQuery.of(context).size;
 
     return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(10),
         child: SingleChildScrollView(
@@ -31,11 +40,11 @@ class _SigninScreenState extends State<SigninScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 300),
-                const Text('Login',
+                const SizedBox(height: 150),
+                const Text('Register',
                     style:
                         TextStyle(fontSize: 35, fontWeight: FontWeight.bold)),
-                const Text('Please enter your email and password',
+                const Text('Create your own Account',
                     style: TextStyle(fontSize: 15)),
                 const SizedBox(height: 20),
                 TextFormField(
@@ -96,8 +105,45 @@ class _SigninScreenState extends State<SigninScreen> {
                   validator: (value) {
                     if (passwordcontroller.text.trim().isEmpty) {
                       return 'Please enter password';
-                    } else if (passwordcontroller.text.trim().length <= 8) {
+                    } else if (passwordcontroller.text.trim().length < 8) {
                       return 'Password must be at least 8 characters';
+                    } else {
+                      return null;
+                    }
+                  },
+                ),
+                const SizedBox(height: 10),
+                TextFormField(
+                  controller: confirmpassword,
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: cwhite,
+                    hintText: 'Confirm Password',
+                    focusedBorder: OutlineInputBorder(
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(10)),
+                        borderSide:
+                            BorderSide(color: Colors.deepPurple.shade100)),
+                    focusedErrorBorder: const OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                        borderSide: BorderSide(color: cred)),
+                    errorBorder: const OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                        borderSide: BorderSide(color: cred)),
+                    enabledBorder: OutlineInputBorder(
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(10)),
+                        borderSide:
+                            BorderSide(color: Colors.deepPurple.shade100)),
+                  ),
+                  validator: (value) {
+                    if (confirmpassword.text.trim().isEmpty) {
+                      return 'Please enter password';
+                    } else if (passwordcontroller.text.trim().length < 8) {
+                      return 'Password must be at least 8 characters';
+                    } else if (passwordcontroller.text.trim() !=
+                        confirmpassword.text.trim()) {
+                      return 'Passwords not matching';
                     } else {
                       return null;
                     }
@@ -110,9 +156,14 @@ class _SigninScreenState extends State<SigninScreen> {
                     style: ElevatedButton.styleFrom(
                         fixedSize: Size(
                             customsize.width * 0.8, customsize.height * 0.06)),
-                    onPressed: () {
+                    onPressed: () async {
                       if (formkey.currentState!.validate()) {
                         if (emailcontroller.text.trim().contains(email)) {
+                          Map<String, dynamic> userData = {
+                            'email': emailcontroller.text.trim(),
+                            'password': passwordcontroller.text.trim()
+                          };
+                          fireStore.collection('User').add(userData);
                           Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -124,69 +175,11 @@ class _SigninScreenState extends State<SigninScreen> {
                         return;
                       }
                     },
-                    child: const Text('Sign-in',
+                    child: const Text('Register',
                         style: TextStyle(color: cblack, fontSize: 16)),
                   ),
                 ),
-                const SizedBox(height: 10),
-                const Row(children: <Widget>[
-                  Expanded(child: Divider()),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 3),
-                    child: Text("OR", style: TextStyle(color: Colors.grey)),
-                  ),
-                  Expanded(child: Divider()),
-                ]),
-                const SizedBox(height: 10),
-                Align(
-                  alignment: Alignment.center,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                        fixedSize: Size(
-                            customsize.width * 0.8, customsize.height * 0.06)),
-                    onPressed: () async {
-                      await logInWithGoogle();
-                      if (mounted) {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (ctx) => const HomeScreen()));
-                      }
-                    },
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        SizedBox(
-                          height: customsize.height * 0.03,
-                          // decoration: BoxDecoration(color: Colors.blue),
-                          child: Image.asset(
-                            'assets/Google__G__logo.svg.png',
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                        const SizedBox(
-                          width: 5.0,
-                        ),
-                        const Text(
-                          'Sign-in with Google',
-                          style: TextStyle(color: cblack, fontSize: 15),
-                        )
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 50),
-                Align(
-                    alignment: Alignment.center,
-                    child: GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (ctx) => const RegisterScreen()));
-                        },
-                        child: const Text('Create an account...?')))
+                const SizedBox(height: 200)
               ],
             ),
           ),
